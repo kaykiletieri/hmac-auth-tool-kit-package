@@ -4,6 +4,12 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Authors>Kayki Letieri</Authors>
+    <Description>HmacAuthToolkit is a package designed to simplify the process of HMAC-based authentication, allowing for easy configuration of standard HMAC authentication as well as customization with additional claims.</Description>
+    <Title>HmacAuthToolkit</Title>
+    <RepositoryUrl>https://github.com/kaykiletieri/hmac-auth-tool-kit-package</RepositoryUrl>
+	<PackageTags>HMAC;Authentication;Claims;Security;Crypto;Token;Authorization</PackageTags>
   </PropertyGroup>
 
 </Project>

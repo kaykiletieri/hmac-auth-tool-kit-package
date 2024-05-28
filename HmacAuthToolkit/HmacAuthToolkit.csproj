@@ -10,6 +10,14 @@
     <Title>HmacAuthToolkit</Title>
     <RepositoryUrl>https://github.com/kaykiletieri/hmac-auth-tool-kit-package</RepositoryUrl>
 	<PackageTags>HMAC;Authentication;Claims;Security;Crypto;Token;Authorization</PackageTags>
+	<PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
 </Project>

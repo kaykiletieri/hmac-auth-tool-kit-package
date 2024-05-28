@@ -1,0 +1,87 @@
+name: Publish to GitHub Packages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Setup .NET Core SDK
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Calculate version
+      id: calculate-version
+      run: |
+        # Fetch all tags
+        git fetch --tags
+
+        # Get the latest tag or fallback to 1.0.0 if no tags are found
+        latest_tag=$(git describe --tags $(git rev-list --tags --max-count=1) 2>/dev/null || echo "1.0.0")
+        echo "Latest tag: $latest_tag"
+
+        # Extract major, minor, and patch from the tag
+        if [[ $latest_tag =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+          major=${BASH_REMATCH[1]}
+          minor=${BASH_REMATCH[2]}
+          patch=${BASH_REMATCH[3]}
+        else
+          echo "Tag not in expected format. Setting version to 1.0.0"
+          major=1
+          minor=0
+          patch=0
+        fi
+
+        # Increment the patch version
+        new_patch=$((patch + 1))
+        new_version="$major.$minor.$new_patch"
+        echo "New version: $new_version"
+
+        # Set the new version as an environment variable
+        echo "VERSION=$new_version" >> $GITHUB_ENV
+
+    - name: Update .csproj version
+      run: |
+        new_version=${{ env.VERSION }}
+        csproj_file="HmacAuthToolkit/HmacAuthToolkit.csproj"
+        echo "Updating $csproj_file with version $new_version"
+        sed -i "s/<Version>.*<\/Version>/<Version>$new_version<\/Version>/" $csproj_file
+
+    - name: Build solution
+      run: dotnet build HmacAuthToolkit.sln --configuration Release
+
+    - name: Run tests
+      run: dotnet test HmacAuthToolkit/HmacAuthToolkit.csproj --configuration Release
+
+    - name: Build package
+      run: |
+        cd HmacAuthToolkit
+        dotnet build -c Release -o out
+
+    - name: Publish to GitHub Packages
+      run: |
+        cd HmacAuthToolkit/out
+        dotnet nuget push *.nupkg --api-key ${{ secrets.GH_TOKEN }} --source https://nuget.pkg.github.com/kaykiletieri/index.json  --skip-duplicate
+
+    - name: Publish to NuGet.org
+      run: |
+        cd HmacAuthToolkit/out
+        dotnet nuget push *.nupkg --api-key ${{ secrets.NUGET_TOKEN }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+    - name: Create and push new tag
+      env:
+        GH_PAT: ${{ secrets.GH_PAT }}
+      run: |
+        new_version=${{ env.VERSION }}
+        git config --global user.name "github-actions"
+        git config --global user.email "github-actions@github.com"
+        git tag -a "$new_version" -m "Release version $new_version"
+        git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/kaykiletieri/hmac-auth-tool-kit-package.git --tags
